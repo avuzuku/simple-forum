@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 60px auto; padding: 0 15px; background: #f9f9f9; color: #333; }
+        .box { background: white; border: 1px solid #ddd; padding: 25px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        input, button { width: 100%; box-sizing: border-box; margin-top: 8px; margin-bottom: 16px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #0066cc; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #004c99; }
+        .error { color: #d9534f; margin-bottom: 12px; }
+        a { color: #0066cc; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>Регистрация</h2>
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        <form method="POST">
+            <label>Имя пользователя:</label>
+            <input type="text" name="username" required>
+
+            <label>Пароль:</label>
+            <input type="password" name="password" required>
+
+            <button type="submit">Создать аккаунт</button>
+        </form>
+        <p>Уже зарегистрированы? <a href="/login">Вход</a></p>
+        <p><a href="/">&larr; На главную</a></p>
+    </div>
+
+</body>
+</html>

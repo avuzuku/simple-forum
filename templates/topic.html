@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ topic['title'] }}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 30px auto; padding: 0 15px; background: #f9f9f9; color: #333; }
+        .box { background: white; border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .post { border-bottom: 1px solid #eee; padding: 15px 0; }
+        .post:last-child { border-bottom: none; }
+        .post-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85em; color: #666; margin-bottom: 8px; }
+        .post-body { white-space: pre-wrap; line-height: 1.5; }
+        .badge { background: #d9534f; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+        input, textarea, button { width: 100%; box-sizing: border-box; margin-top: 8px; margin-bottom: 12px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #218838; }
+        .btn-danger { background: #d9534f; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; width: auto; margin: 0; }
+        .btn-danger:hover { background: #c9302c; }
+        a.back-link { display: inline-block; margin-bottom: 15px; color: #0066cc; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="back-link">&larr; Назад к списку тем</a>
+
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>{{ topic['title'] }}</h1>
+        {% if session.get('is_admin') or session.get('user_id') == topic['author_id'] %}
+            <form action="/topic/{{ topic['id'] }}/delete" method="POST" style="margin: 0;">
+                <button type="submit" class="btn-danger" onclick="return confirm('Удалить всю тему?');">Удалить тему</button>
+            </form>
+        {% endif %}
+    </div>
+
+    <div class="box">
+        {% for post in posts %}
+            <div class="post">
+                <div class="post-header">
+                    <div>
+                        <strong>{{ post['author'] }}</strong>
+                        {% if post['author_is_admin'] %}<span class="badge">Админ</span>{% endif %}
+                        • {{ post['created_at'] }}
+                    </div>
+                    {% if session.get('is_admin') or session.get('user_id') == post['author_id'] %}
+                        <form action="/post/{{ post['id'] }}/delete" method="POST" style="margin: 0;">
+                            <button type="submit" class="btn-danger" onclick="return confirm('Удалить сообщение?');">Удалить</button>
+                        </form>
+                    {% endif %}
+                </div>
+                <div class="post-body">{{ post['content'] }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if session.get('user_id') %}
+    <div class="box">
+        <h3>Ответить в тему</h3>
+        <form action="/topic/{{ topic['id'] }}/reply" method="POST">
+            <textarea name="content" rows="4" required placeholder="Напишите ответ..."></textarea>
+            <button type="submit">Отправить</button>
+        </form>
+    </div>
+    {% else %}
+    <div class="box">
+        <p><a href="/login">Войдите</a>, чтобы оставить ответ.</p>
+    </div>
+    {% endif %}
+
+</body>
+</html>

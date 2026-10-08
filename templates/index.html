@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Форум</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 30px auto; padding: 0 15px; background: #f9f9f9; color: #333; }
+        .box { background: white; border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav-links a { margin-left: 10px; color: #0066cc; text-decoration: none; }
+        .badge { background: #d9534f; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+        input, textarea, button { width: 100%; box-sizing: border-box; margin-top: 8px; margin-bottom: 12px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #0066cc; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #004c99; }
+        .btn-danger { background: #d9534f; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; width: auto; margin: 0; }
+        .btn-danger:hover { background: #c9302c; }
+        .topic-item { border-bottom: 1px solid #eee; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+        .topic-item:last-child { border-bottom: none; }
+        .topic-title { font-size: 1.2em; text-decoration: none; color: #0066cc; font-weight: bold; }
+        .topic-meta { font-size: 0.85em; color: #666; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="nav">
+        <h1>Форум</h1>
+        <div class="nav-links">
+            {% if session.get('user_id') %}
+                <span>Вы вошли как <strong>{{ session.get('username') }}</strong></span>
+                {% if session.get('is_admin') %}<span class="badge">Админ</span>{% endif %}
+                <a href="/logout">Выйти</a>
+            {% else %}
+                <a href="/login">Вход</a>
+                <a href="/register">Регистрация</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if session.get('user_id') %}
+    <div class="box">
+        <h2>Создать тему</h2>
+        <form action="/create_topic" method="POST">
+            <label>Название темы:</label>
+            <input type="text" name="title" required>
+            
+            <label>Сообщение:</label>
+            <textarea name="content" rows="4" required></textarea>
+            
+            <button type="submit">Опубликовать</button>
+        </form>
+    </div>
+    {% else %}
+    <div class="box">
+        <p><a href="/login">Войдите</a> или <a href="/register">зарегистрируйтесь</a>, чтобы создавать темы и оставлять ответы.</p>
+    </div>
+    {% endif %}
+
+    <div class="box">
+        <h2>Список тем</h2>
+        {% if topics %}
+            {% for t in topics %}
+                <div class="topic-item">
+                    <div>
+                        <a class="topic-title" href="/topic/{{ t['id'] }}">{{ t['title'] }}</a>
+                        <div class="topic-meta">
+                            Автор: {{ t['author'] }} | Дата: {{ t['created_at'] }} | Ответов: {{ t['reply_count'] }}
+                        </div>
+                    </div>
+                    {% if session.get('is_admin') or session.get('user_id') == t['author_id'] %}
+                        <form action="/topic/{{ t['id'] }}/delete" method="POST" style="margin: 0;">
+                            <button type="submit" class="btn-danger" onclick="return confirm('Удалить тему?');">Удалить</button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Тем пока нет.</p>
+        {% endif %}
+    </div>
+
+</body>
+</html>
