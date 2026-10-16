@@ -91,3 +91,5 @@ cython_debug/
 *.swp
 *.swo
 .DS_Store
+
+static/
