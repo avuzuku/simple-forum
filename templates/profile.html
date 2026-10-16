@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль {{ user['username'] }}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 15px; background: #18191a; color: #e4e6eb; }
+        .box { background: #242526; border: 1px solid #393a3b; padding: 30px; border-radius: 8px; text-align: center; }
+        .profile-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; background: #3a3b3c; }
+        .avatar-placeholder { width: 100px; height: 100px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #3a3b3c; color: #b0b3b8; font-size: 2.5em; font-weight: bold; margin-bottom: 15px; }
+        .bio { background: #3a3b3c; padding: 15px; border-radius: 6px; text-align: left; margin: 20px 0; white-space: pre-wrap; font-size: 0.95em; }
+        .stats { display: flex; justify-content: space-around; margin: 20px 0; border-top: 1px solid #393a3b; border-bottom: 1px solid #393a3b; padding: 10px 0; }
+        a { color: #4e95ff; text-decoration: none; }
+        .btn { display: inline-block; background: #2374e1; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <a href="/" style="display: inline-block; margin-bottom: 15px;">&larr; На главную</a>
+
+    <div class="box">
+        {% if user['avatar'] %}
+            <img src="/static/uploads/{{ user['avatar'] }}" class="profile-avatar">
+        {% else %}
+            <div class="avatar-placeholder">{{ user['username'][0]|upper }}</div>
+        {% endif %}
+
+        <h2>{{ user['username'] }}</h2>
+        <div style="color: #b0b3b8; font-size: 0.85em;">Регистрация: {{ user['created_at'] }}</div>
+
+        {% if restricted %}
+            <div class="bio" style="text-align: center; color: #b0b3b8;">
+                Этот профиль скрыт настройками приватности. Авторизуйтесь для просмотра.
+            </div>
+        {% else %}
+            <div class="stats">
+                <div><strong>{{ topics_count }}</strong> тем</div>
+                <div><strong>{{ posts_count }}</strong> сообщений</div>
+            </div>
+
+            {% if user['bio'] %}
+                <div class="bio">{{ user['bio'] }}</div>
+            {% endif %}
+
+            {% if session.get('user_id') == user['id'] %}
+                <a href="/settings" class="btn">Редактировать профиль</a>
+            {% endif %}
+        {% endif %}
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Настройки профиля</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 15px; background: #18191a; color: #e4e6eb; }
+        .box { background: #242526; border: 1px solid #393a3b; padding: 25px; border-radius: 8px; }
+        input[type="text"], textarea, input[type="file"] { width: 100%; box-sizing: border-box; margin-top: 8px; margin-bottom: 16px; padding: 10px; background: #3a3b3c; border: 1px solid #4e4f50; border-radius: 6px; color: white; }
+        button { background: #2374e1; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        button:hover { background: #1b62c4; }
+        .checkbox-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        a { color: #4e95ff; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <a href="/profile/{{ user['username'] }}" style="display: inline-block; margin-bottom: 15px;">&larr; Назад в профиль</a>
+
+    <div class="box">
+        <h2>Настройки профиля</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <label>Аватарка:</label>
+            <input type="file" name="avatar" accept="image/*">
+
+            <label>О себе:</label>
+            <textarea name="bio" rows="4">{{ user['bio'] }}</textarea>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="private" name="is_private" value="1" {% if user['is_private'] %}checked{% endif %}>
+                <label for="private">Скрыть профиль от гостей (неавторизованных пользователей)</label>
+            </div>
+
+            <button type="submit">Сохранить</button>
+        </form>
+    </div>
+
+</body>
+</html>

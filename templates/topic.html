@@ -4,65 +4,106 @@
     <meta charset="UTF-8">
     <title>{{ topic['title'] }}</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 30px auto; padding: 0 15px; background: #f9f9f9; color: #333; }
-        .box { background: white; border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .post { border-bottom: 1px solid #eee; padding: 15px 0; }
+        body { font-family: system-ui, sans-serif; max-width: 850px; margin: 30px auto; padding: 0 15px; background: #18191a; color: #e4e6eb; }
+        .box { background: #242526; border: 1px solid #393a3b; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .post { border-bottom: 1px solid #393a3b; padding: 15px 0; }
         .post:last-child { border-bottom: none; }
-        .post-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85em; color: #666; margin-bottom: 8px; }
-        .post-body { white-space: pre-wrap; line-height: 1.5; }
-        .badge { background: #d9534f; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
-        input, textarea, button { width: 100%; box-sizing: border-box; margin-top: 8px; margin-bottom: 12px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background: #218838; }
-        .btn-danger { background: #d9534f; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; width: auto; margin: 0; }
-        .btn-danger:hover { background: #c9302c; }
-        a.back-link { display: inline-block; margin-bottom: 15px; color: #0066cc; text-decoration: none; }
+        .post-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; margin-bottom: 10px; }
+        .post-author { display: flex; align-items: center; text-decoration: none; color: #e4e6eb; }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-right: 10px; background: #3a3b3c; }
+        .avatar-placeholder { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #3a3b3c; color: #b0b3b8; font-weight: bold; margin-right: 10px; }
+        .post-body { white-space: pre-wrap; line-height: 1.5; margin-bottom: 10px; }
+        .badge { background: #e41e3f; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 6px; }
+        .pin-badge { background: #f7b928; color: #111; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; }
+        .attached-image { max-width: 100%; max-height: 450px; border-radius: 6px; margin-top: 10px; display: block; }
+        audio { margin-top: 10px; width: 100%; }
+        input[type="text"], textarea, input[type="file"] { width: 100%; box-sizing: border-box; margin-top: 8px; margin-bottom: 12px; padding: 10px; background: #3a3b3c; border: 1px solid #4e4f50; border-radius: 6px; color: white; }
+        button { background: #2374e1; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #1b62c4; }
+        .btn-like { background: #3a3b3c; color: #e4e6eb; border: 1px solid #4e4f50; padding: 4px 10px; }
+        .btn-like.liked { background: #e41e3f; border-color: #e41e3f; }
+        .btn-danger { background: #e41e3f; padding: 4px 8px; font-size: 0.8em; margin: 0; }
+        .btn-danger:hover { background: #c51633; }
+        .actions { display: flex; gap: 8px; align-items: center; }
+        a.back-link { display: inline-block; margin-bottom: 15px; color: #4e95ff; text-decoration: none; }
     </style>
 </head>
 <body>
 
-    <a href="/" class="back-link">&larr; Назад к списку тем</a>
+    <a href="/" class="back-link">&larr; Список тем</a>
 
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>{{ topic['title'] }}</h1>
-        {% if session.get('is_admin') or session.get('user_id') == topic['author_id'] %}
-            <form action="/topic/{{ topic['id'] }}/delete" method="POST" style="margin: 0;">
-                <button type="submit" class="btn-danger" onclick="return confirm('Удалить всю тему?');">Удалить тему</button>
-            </form>
-        {% endif %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2>
+            {% if topic['is_pinned'] %}<span class="pin-badge">Закреплено</span>{% endif %}
+            {{ topic['title'] }}
+        </h2>
+        <div class="actions">
+            {% if session.get('is_admin') %}
+                <form action="/topic/{{ topic['id'] }}/pin" method="POST" style="margin: 0;">
+                    <button type="submit" style="background: #f7b928; color: #111;">{{ 'Открепить' if topic['is_pinned'] else 'Закрепить' }}</button>
+                </form>
+            {% endif %}
+            {% if session.get('is_admin') or session.get('user_id') == topic['author_id'] %}
+                <form action="/topic/{{ topic['id'] }}/delete" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn-danger" onclick="return confirm('Удалить тему?');">Удалить тему</button>
+                </form>
+            {% endif %}
+        </div>
     </div>
 
     <div class="box">
         {% for post in posts %}
             <div class="post">
                 <div class="post-header">
-                    <div>
-                        <strong>{{ post['author'] }}</strong>
-                        {% if post['author_is_admin'] %}<span class="badge">Админ</span>{% endif %}
-                        • {{ post['created_at'] }}
-                    </div>
+                    <a class="post-author" href="/profile/{{ post['author'] }}">
+                        {% if post['avatar'] %}
+                            <img src="/static/uploads/{{ post['avatar'] }}" class="avatar">
+                        {% else %}
+                            <span class="avatar-placeholder">{{ post['author'][0]|upper }}</span>
+                        {% endif %}
+                        <div>
+                            <strong>{{ post['author'] }}</strong>
+                            {% if post['author_is_admin'] %}<span class="badge">Админ</span>{% endif %}
+                            <div style="color: #b0b3b8; font-size: 0.85em;">{{ post['created_at'] }}</div>
+                        </div>
+                    </a>
                     {% if session.get('is_admin') or session.get('user_id') == post['author_id'] %}
                         <form action="/post/{{ post['id'] }}/delete" method="POST" style="margin: 0;">
-                            <button type="submit" class="btn-danger" onclick="return confirm('Удалить сообщение?');">Удалить</button>
+                            <button type="submit" class="btn-danger" onclick="return confirm('Удалить?');">Удалить</button>
                         </form>
                     {% endif %}
                 </div>
+
                 <div class="post-body">{{ post['content'] }}</div>
+
+                {% if post['media_file'] %}
+                    {% if post['media_type'] == 'image' %}
+                        <img src="/static/uploads/{{ post['media_file'] }}" class="attached-image">
+                    {% elif post['media_type'] == 'audio' %}
+                        <audio controls src="/static/uploads/{{ post['media_file'] }}"></audio>
+                    {% endif %}
+                {% endif %}
+
+                <div style="margin-top: 10px;">
+                    <form action="/post/{{ post['id'] }}/like" method="POST" style="display: inline;">
+                        <button type="submit" class="btn-like {% if post['user_liked'] %}liked{% endif %}">
+                            ♥ {{ post['likes_count'] }}
+                        </button>
+                    </form>
+                </div>
             </div>
         {% endfor %}
     </div>
 
     {% if session.get('user_id') %}
     <div class="box">
-        <h3>Ответить в тему</h3>
-        <form action="/topic/{{ topic['id'] }}/reply" method="POST">
-            <textarea name="content" rows="4" required placeholder="Напишите ответ..."></textarea>
+        <h3>Ответить</h3>
+        <form action="/topic/{{ topic['id'] }}/reply" method="POST" enctype="multipart/form-data">
+            <textarea name="content" rows="3" placeholder="Сообщение..."></textarea>
+            <label style="font-size: 0.9em; color: #b0b3b8;">Прикрепить фото или аудио:</label>
+            <input type="file" name="attachment" accept="image/*,audio/*">
             <button type="submit">Отправить</button>
         </form>
-    </div>
-    {% else %}
-    <div class="box">
-        <p><a href="/login">Войдите</a>, чтобы оставить ответ.</p>
     </div>
     {% endif %}
 
