@@ -76,8 +76,8 @@ mini_forum/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/avuzuku/simple-forum.git
+cd simple-forum
 ```
 
 2. Create and activate a virtual environment:
