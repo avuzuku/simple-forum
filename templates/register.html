@@ -3,17 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Регистрация</title>
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 60px auto; padding: 0 15px; background: #18191a; color: #e4e6eb; }
-        .box { background: #242526; border: 1px solid #393a3b; padding: 25px; border-radius: 8px; }
-        input { width: 100%; box-sizing: border-box; margin-top: 8px; margin-bottom: 16px; padding: 10px; background: #3a3b3c; border: 1px solid #4e4f50; border-radius: 6px; color: white; }
-        button { width: 100%; background: #2374e1; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .error { color: #e41e3f; margin-bottom: 12px; }
-        a { color: #4e95ff; text-decoration: none; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="box">
+    <div class="box box-narrow">
         <h2>Регистрация</h2>
         {% if error %}<div class="error">{{ error }}</div>{% endif %}
         <form method="POST">
@@ -21,7 +14,7 @@
             <input type="text" name="username" required>
             <label>Пароль:</label>
             <input type="password" name="password" required>
-            <button type="submit">Создать аккаунт</button>
+            <button type="submit" class="btn-block">Создать аккаунт</button>
         </form>
         <p style="margin-top: 15px; font-size: 0.9em;">Уже зарегистрированы? <a href="/login">Вход</a></p>
         <p><a href="/">&larr; На главную</a></p>

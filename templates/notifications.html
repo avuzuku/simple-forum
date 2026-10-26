@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Уведомления</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <a href="/" class="back-link">&larr; На главную</a>
+    <div class="nav">
+        <h2><a href="/" style="color: inherit; text-decoration: none;">Форум</a></h2>
+        <div class="nav-links">
+            {% if session.get('user_id') %}
+                <a href="/notifications">
+                    Уведомления
+                    {% if unread_notifications > 0 %}
+                        <span class="notif-badge">{{ unread_notifications }}</span>
+                    {% endif %}
+                </a>
+                <a href="/profile/{{ session.get('username') }}">
+                    {% if session.get('avatar') %}
+                        <img src="/static/uploads/{{ session.get('avatar') }}" class="avatar">
+                    {% else %}
+                        <span class="avatar-placeholder">{{ session.get('username')[0]|upper }}</span>
+                    {% endif %}
+                    {{ session.get('username') }}
+                </a>
+                <a href="/settings">Настройки</a>
+                <a href="/logout">Выйти</a>
+            {% else %}
+                <a href="/login">Вход</a>
+                <a href="/register">Регистрация</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="box">
+        <h2>Уведомления</h2>
+        {% if notifications %}
+            {% for n in notifications %}
+                <div class="item">
+                    <a href="{{ n['link'] }}">{{ n['text'] }}</a>
+                    <div class="date">{{ n['created_at'] }}</div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #b0b3b8;">У вас нет новых уведомлений.</p>
+        {% endif %}
+    </div>
+
+</body>
+</html>

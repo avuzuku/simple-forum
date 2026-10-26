@@ -2,36 +2,21 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Форум</title>
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 850px; margin: 30px auto; padding: 0 15px; background: #18191a; color: #e4e6eb; }
-        .box { background: #242526; border: 1px solid #393a3b; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .nav-links a { margin-left: 12px; color: #4e95ff; text-decoration: none; font-weight: 500; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 8px; background: #3a3b3c; }
-        .avatar-placeholder { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #3a3b3c; color: #b0b3b8; font-weight: bold; margin-right: 8px; vertical-align: middle; }
-        .badge { background: #e41e3f; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
-        .pin-badge { background: #f7b928; color: #111; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
-        input[type="text"], textarea, input[type="file"] { width: 100%; box-sizing: border-box; margin-top: 8px; margin-bottom: 12px; padding: 10px; background: #3a3b3c; border: 1px solid #4e4f50; border-radius: 6px; color: white; }
-        button { background: #2374e1; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #1b62c4; }
-        .btn-danger { background: #e41e3f; padding: 4px 8px; font-size: 0.85em; width: auto; margin: 0; }
-        .btn-danger:hover { background: #c51633; }
-        .topic-item { border-bottom: 1px solid #393a3b; padding: 14px 0; display: flex; justify-content: space-between; align-items: center; }
-        .topic-item:last-child { border-bottom: none; }
-        .topic-title { font-size: 1.15em; text-decoration: none; color: #e4e6eb; font-weight: 600; }
-        .topic-title:hover { color: #4e95ff; }
-        .topic-meta { font-size: 0.85em; color: #b0b3b8; margin-top: 6px; }
-        .topic-meta a { color: #b0b3b8; text-decoration: none; }
-        .topic-meta a:hover { text-decoration: underline; }
-    </style>
+    <title>{% if category %}{{ category['name'] }} — Форум{% else %}Главная — Форум{% endif %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
     <div class="nav">
-        <h2>Форум</h2>
+        <h2><a href="/" style="color: inherit; text-decoration: none;">Форум</a></h2>
         <div class="nav-links">
             {% if session.get('user_id') %}
+                <a href="/notifications">
+                    Уведомления
+                    {% if unread_notifications > 0 %}
+                        <span class="notif-badge">{{ unread_notifications }}</span>
+                    {% endif %}
+                </a>
                 <a href="/profile/{{ session.get('username') }}">
                     {% if session.get('avatar') %}
                         <img src="/static/uploads/{{ session.get('avatar') }}" class="avatar">
@@ -49,42 +34,98 @@
         </div>
     </div>
 
-    {% if session.get('user_id') %}
-    <div class="box">
-        <h3>Новая тема</h3>
-        <form action="/create_topic" method="POST" enctype="multipart/form-data">
-            <input type="text" name="title" required placeholder="Заголовок">
-            <textarea name="content" rows="3" required placeholder="Текст первого сообщения..."></textarea>
-            <label style="font-size: 0.9em; color: #b0b3b8;">Прикрепить фото или аудио:</label>
-            <input type="file" name="attachment" accept="image/*,audio/*">
-            <button type="submit">Создать</button>
-        </form>
-    </div>
-    {% endif %}
+    {% if not category %}
 
-    <div class="box">
-        <h3>Темы</h3>
-        {% if topics %}
-            {% for t in topics %}
-                <div class="topic-item">
-                    <div>
-                        {% if t['is_pinned'] %}<span class="pin-badge">Закреплено</span>{% endif %}
-                        <a class="topic-title" href="/topic/{{ t['id'] }}">{{ t['title'] }}</a>
-                        <div class="topic-meta">
-                            Автор: <a href="/profile/{{ t['author'] }}"><strong>{{ t['author'] }}</strong></a> • {{ t['created_at'] }} • Ответов: {{ t['reply_count'] }}
+        <div class="box" style="text-align: center; padding: 35px 20px;">
+            <h1 style="margin: 0 0 10px 0;">Добро пожаловать на форум!</h1>
+            <p style="color: #b0b3b8; font-size: 1.05em; margin: 0 auto; max-width: 600px; line-height: 1.5;">
+                Выберите подходящий тематический раздел ниже, чтобы ознакомиться с публикациями участников или создать собственное обсуждение.
+            </p>
+        </div>
+
+        <div class="box">
+            <h3>Разделы форума</h3>
+            <div class="category-grid">
+                {% for cat in categories %}
+                    <a href="/?category={{ cat['slug'] }}" class="category-card">
+                        <div>
+                            <div class="category-card-title">{{ cat['name'] }}</div>
+                            <div class="category-card-meta">Тем создано: {{ cat['topic_count'] }}</div>
                         </div>
+                        <span style="font-size: 1.4em; color: #4e95ff;">&rarr;</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+    {% else %}
+
+        <a href="/" class="back-link">&larr; Вернуться к разделам</a>
+
+        <div class="box" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0;">Раздел: {{ category['name'] }}</h2>
+            <form method="GET" action="/" style="display: flex; gap: 8px;">
+                <input type="hidden" name="category" value="{{ category['slug'] }}">
+                <input type="text" name="q" placeholder="Поиск в разделе..." value="{{ search_query }}" style="margin: 0; padding: 8px;">
+                <button type="submit" style="padding: 8px 14px;">Найти</button>
+            </form>
+        </div>
+
+        {% if session.get('user_id') %}
+        <div class="box">
+            <h3>Создать тему в разделе «{{ category['name'] }}»</h3>
+            <form action="/create_topic" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="category_id" value="{{ category['id'] }}">
+
+                <input type="text" name="title" required placeholder="Заголовок темы">
+                <textarea name="content" rows="4" required placeholder="Текст сообщения... Поддерживается **жирный**, *курсив*, > цитата и [spoiler]текст[/spoiler]"></textarea>
+                
+                <label>Прикрепить изображение или аудио:</label>
+                <input type="file" name="attachment" accept="image/*,audio/*">
+
+                <details style="margin: 12px 0; color: #b0b3b8;">
+                    <summary style="cursor: pointer; font-weight: bold; color: #4e95ff;">+ Добавить опрос к теме (опционально)</summary>
+                    <div style="margin-top: 10px;">
+                        <input type="text" name="poll_question" placeholder="Вопрос опроса">
+                        <textarea name="poll_options" rows="3" placeholder="Варианты ответов (каждый с новой строки)"></textarea>
                     </div>
-                    {% if session.get('is_admin') or session.get('user_id') == t['author_id'] %}
-                        <form action="/topic/{{ t['id'] }}/delete" method="POST" style="margin: 0;">
-                            <button type="submit" class="btn-danger" onclick="return confirm('Удалить?');">Удалить</button>
-                        </form>
-                    {% endif %}
-                </div>
-            {% endfor %}
+                </details>
+
+                <button type="submit">Опубликовать</button>
+            </form>
+        </div>
         {% else %}
-            <p style="color: #b0b3b8;">Тем пока нет.</p>
+        <div class="box" style="text-align: center; color: #b0b3b8;">
+            <a href="/login">Войдите</a>, чтобы открыть новое обсуждение в этом разделе.
+        </div>
         {% endif %}
-    </div>
+
+        <div class="box">
+            <h3>Обсуждения</h3>
+            {% if topics %}
+                {% for t in topics %}
+                    <div class="topic-item">
+                        <div>
+                            {% if t['is_pinned'] %}<span class="pin-badge">Закреплено</span>{% endif %}
+                            {% if t['is_locked'] %}<span class="lock-badge">Закрыта</span>{% endif %}
+                            <a class="topic-title" href="/topic/{{ t['id'] }}">{{ t['title'] }}</a>
+                            <div class="topic-meta">
+                                Автор: <a href="/profile/{{ t['author'] }}"><strong>{{ t['author'] }}</strong></a> • {{ t['created_at'] }} • Ответов: {{ t['reply_count'] }}
+                            </div>
+                        </div>
+                        {% if session.get('is_admin') or session.get('user_id') == t['author_id'] %}
+                            <form action="/topic/{{ t['id'] }}/delete" method="POST" style="margin: 0;">
+                                <button type="submit" class="btn-danger" onclick="return confirm('Удалить тему?');">Удалить</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #b0b3b8;">В этом разделе пока нет тем.</p>
+            {% endif %}
+        </div>
+
+    {% endif %}
 
 </body>
 </html>

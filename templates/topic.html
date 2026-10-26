@@ -3,53 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ topic['title'] }}</title>
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 850px; margin: 30px auto; padding: 0 15px; background: #18191a; color: #e4e6eb; }
-        .box { background: #242526; border: 1px solid #393a3b; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .post { border-bottom: 1px solid #393a3b; padding: 15px 0; }
-        .post:last-child { border-bottom: none; }
-        .post-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; margin-bottom: 10px; }
-        .post-author { display: flex; align-items: center; text-decoration: none; color: #e4e6eb; }
-        .avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-right: 10px; background: #3a3b3c; }
-        .avatar-placeholder { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #3a3b3c; color: #b0b3b8; font-weight: bold; margin-right: 10px; }
-        .post-body { white-space: pre-wrap; line-height: 1.5; margin-bottom: 10px; }
-        .badge { background: #e41e3f; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 6px; }
-        .pin-badge { background: #f7b928; color: #111; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; }
-        .attached-image { max-width: 100%; max-height: 450px; border-radius: 6px; margin-top: 10px; display: block; }
-        audio { margin-top: 10px; width: 100%; }
-        input[type="text"], textarea, input[type="file"] { width: 100%; box-sizing: border-box; margin-top: 8px; margin-bottom: 12px; padding: 10px; background: #3a3b3c; border: 1px solid #4e4f50; border-radius: 6px; color: white; }
-        button { background: #2374e1; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #1b62c4; }
-        .btn-like { background: #3a3b3c; color: #e4e6eb; border: 1px solid #4e4f50; padding: 4px 10px; }
-        .btn-like.liked { background: #e41e3f; border-color: #e41e3f; }
-        .btn-danger { background: #e41e3f; padding: 4px 8px; font-size: 0.8em; margin: 0; }
-        .btn-danger:hover { background: #c51633; }
-        .actions { display: flex; gap: 8px; align-items: center; }
-        a.back-link { display: inline-block; margin-bottom: 15px; color: #4e95ff; text-decoration: none; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-    <a href="/" class="back-link">&larr; Список тем</a>
+    <div class="nav">
+        <h2><a href="/" style="color: inherit; text-decoration: none;">Форум</a></h2>
+        <div class="nav-links">
+            {% if session.get('user_id') %}
+                <a href="/notifications">
+                    Уведомления
+                    {% if unread_notifications > 0 %}
+                        <span class="notif-badge">{{ unread_notifications }}</span>
+                    {% endif %}
+                </a>
+                <a href="/profile/{{ session.get('username') }}">
+                    {% if session.get('avatar') %}
+                        <img src="/static/uploads/{{ session.get('avatar') }}" class="avatar">
+                    {% else %}
+                        <span class="avatar-placeholder">{{ session.get('username')[0]|upper }}</span>
+                    {% endif %}
+                    {{ session.get('username') }}
+                </a>
+                <a href="/settings">Настройки</a>
+                <a href="/logout">Выйти</a>
+            {% else %}
+                <a href="/login">Вход</a>
+                <a href="/register">Регистрация</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="/?category={{ topic['category_slug'] }}" class="back-link">&larr; Назад в раздел «{{ topic['category_name'] }}»</a>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <h2>
             {% if topic['is_pinned'] %}<span class="pin-badge">Закреплено</span>{% endif %}
+            {% if topic['is_locked'] %}<span class="lock-badge">Закрыта</span>{% endif %}
             {{ topic['title'] }}
         </h2>
         <div class="actions">
             {% if session.get('is_admin') %}
-                <form action="/topic/{{ topic['id'] }}/pin" method="POST" style="margin: 0;">
-                    <button type="submit" style="background: #f7b928; color: #111;">{{ 'Открепить' if topic['is_pinned'] else 'Закрепить' }}</button>
+                <form action="/topic/{{ topic['id'] }}/pin" method="POST" style="margin:0;">
+                    <button type="submit" class="btn-action">{{ 'Открепить' if topic['is_pinned'] else 'Закрепить' }}</button>
                 </form>
             {% endif %}
             {% if session.get('is_admin') or session.get('user_id') == topic['author_id'] %}
-                <form action="/topic/{{ topic['id'] }}/delete" method="POST" style="margin: 0;">
-                    <button type="submit" class="btn-danger" onclick="return confirm('Удалить тему?');">Удалить тему</button>
+                <form action="/topic/{{ topic['id'] }}/lock" method="POST" style="margin:0;">
+                    <button type="submit" class="btn-action">{{ 'Открыть' if topic['is_locked'] else 'Закрыть тему' }}</button>
+                </form>
+                <form action="/topic/{{ topic['id'] }}/delete" method="POST" style="margin:0;">
+                    <button type="submit" class="btn-danger" onclick="return confirm('Удалить всю тему?');">Удалить тему</button>
                 </form>
             {% endif %}
         </div>
     </div>
+
+    {% if poll %}
+    <div class="poll-box">
+        <h3>Опрос: {{ poll['question'] }}</h3>
+        {% if user_voted_option_id or topic['is_locked'] or not session.get('user_id') %}
+            {% for opt in poll_options %}
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
+                        <span>{{ opt['text'] }} {% if opt['id'] == user_voted_option_id %}<strong>(Ваш голос)</strong>{% endif %}</span>
+                        <span>{{ opt['percent'] }}% ({{ opt['vote_count'] }})</span>
+                    </div>
+                    <div class="poll-bar">
+                        <div class="poll-fill" style="width: {{ opt['percent'] }}%;"></div>
+                    </div>
+                </div>
+            {% endfor %}
+            <div style="font-size: 0.8em; color: #b0b3b8;">Всего голосов: {{ total_votes }}</div>
+        {% else %}
+            <form action="/topic/{{ topic['id'] }}/poll_vote" method="POST">
+                {% for opt in poll_options %}
+                    <div style="margin-bottom: 8px;">
+                        <label>
+                            <input type="radio" name="option_id" value="{{ opt['id'] }}" required>
+                            {{ opt['text'] }}
+                        </label>
+                    </div>
+                {% endfor %}
+                <button type="submit" style="margin-top: 6px;">Проголосовать</button>
+            </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if (session.get('is_admin') or session.get('user_id') == topic['author_id']) and all_users %}
+    <details class="box" style="margin-bottom: 15px;">
+        <summary style="cursor: pointer; color: #00a884; font-weight: bold;">Управление ролями в теме</summary>
+        <form action="/topic/{{ topic['id'] }}/assign_role" method="POST" style="display: flex; gap: 8px; margin-top: 10px;">
+            <select name="user_id" required>
+                {% for u in all_users %}
+                    <option value="{{ u['id'] }}">{{ u['username'] }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="role_name" placeholder="Название роли (пусто = снять)" style="margin: 0;">
+            <button type="submit" style="white-space: nowrap;">Выдать роль</button>
+        </form>
+    </details>
+    {% endif %}
 
     <div class="box">
         {% for post in posts %}
@@ -57,24 +112,39 @@
                 <div class="post-header">
                     <a class="post-author" href="/profile/{{ post['author'] }}">
                         {% if post['avatar'] %}
-                            <img src="/static/uploads/{{ post['avatar'] }}" class="avatar">
+                            <img src="/static/uploads/{{ post['avatar'] }}" class="avatar avatar-large">
                         {% else %}
-                            <span class="avatar-placeholder">{{ post['author'][0]|upper }}</span>
+                            <span class="avatar-placeholder avatar-large">{{ post['author'][0]|upper }}</span>
                         {% endif %}
                         <div>
-                            <strong>{{ post['author'] }}</strong>
-                            {% if post['author_is_admin'] %}<span class="badge">Админ</span>{% endif %}
-                            <div style="color: #b0b3b8; font-size: 0.85em;">{{ post['created_at'] }}</div>
+                            <div>
+                                <strong>{{ post['author'] }}</strong>
+                                {% if post['author_is_admin'] %}<span class="badge">Админ</span>{% endif %}
+                                {% if topic_roles.get(post['author_id']) %}
+                                    <span class="role-badge">{{ topic_roles.get(post['author_id']) }}</span>
+                                {% endif %}
+                            </div>
+                            {% if post['custom_status'] %}
+                                <div class="status-text">{{ post['custom_status'] }}</div>
+                            {% endif %}
                         </div>
                     </a>
-                    {% if session.get('is_admin') or session.get('user_id') == post['author_id'] %}
-                        <form action="/post/{{ post['id'] }}/delete" method="POST" style="margin: 0;">
-                            <button type="submit" class="btn-danger" onclick="return confirm('Удалить?');">Удалить</button>
-                        </form>
-                    {% endif %}
+
+                    <div class="actions">
+                        {% if session.get('is_admin') or session.get('user_id') == post['author_id'] %}
+                            <a href="/post/{{ post['id'] }}/edit" class="btn-action">Изменить</a>
+                        {% endif %}
+                        {% if session.get('is_admin') or session.get('user_id') == post['author_id'] or session.get('user_id') == topic['author_id'] %}
+                            <form action="/post/{{ post['id'] }}/delete" method="POST" style="margin: 0;">
+                                <button type="submit" class="btn-danger" onclick="return confirm('Удалить?');">Удалить</button>
+                            </form>
+                        {% endif %}
+                    </div>
                 </div>
 
-                <div class="post-body">{{ post['content'] }}</div>
+                <div class="post-body">
+                    {{ post['content']|format_content }}
+                </div>
 
                 {% if post['media_file'] %}
                     {% if post['media_type'] == 'image' %}
@@ -84,28 +154,58 @@
                     {% endif %}
                 {% endif %}
 
-                <div style="margin-top: 10px;">
-                    <form action="/post/{{ post['id'] }}/like" method="POST" style="display: inline;">
-                        <button type="submit" class="btn-like {% if post['user_liked'] %}liked{% endif %}">
-                            ♥ {{ post['likes_count'] }}
-                        </button>
-                    </form>
+                <div class="post-footer">
+                    <div>
+                        {{ post['created_at'] }}
+                        {% if post['is_edited'] %}<span>(изменено)</span>{% endif %}
+                    </div>
+                    <div class="actions">
+                        {% if session.get('user_id') and not topic['is_locked'] %}
+                            <button type="button" class="btn-action" onclick="quotePost('{{ post['author'] }}', `{{ post['content'] }}`)">Цитата</button>
+                        {% endif %}
+                        <form action="/post/{{ post['id'] }}/like" method="POST" style="margin: 0;">
+                            <button type="submit" class="btn-like {% if post['user_liked'] %}liked{% endif %}">
+                                ♥ {{ post['likes_count'] }}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         {% endfor %}
     </div>
 
     {% if session.get('user_id') %}
-    <div class="box">
-        <h3>Ответить</h3>
-        <form action="/topic/{{ topic['id'] }}/reply" method="POST" enctype="multipart/form-data">
-            <textarea name="content" rows="3" placeholder="Сообщение..."></textarea>
-            <label style="font-size: 0.9em; color: #b0b3b8;">Прикрепить фото или аудио:</label>
-            <input type="file" name="attachment" accept="image/*,audio/*">
-            <button type="submit">Отправить</button>
-        </form>
-    </div>
+        {% if not topic['is_locked'] or session.get('is_admin') %}
+            <div class="box">
+                <h3>Ответить в тему</h3>
+                <form action="/topic/{{ topic['id'] }}/reply" method="POST" enctype="multipart/form-data">
+                    <textarea id="reply-textarea" name="content" rows="4" placeholder="Напишите ответ..."></textarea>
+                    <label>Прикрепить изображение или аудио:</label>
+                    <input type="file" name="attachment" accept="image/*,audio/*">
+                    <button type="submit">Отправить ответ</button>
+                </form>
+            </div>
+        {% else %}
+            <div class="box" style="text-align: center; color: #b0b3b8;">
+                Тема закрыта для обсуждения.
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="box" style="text-align: center;">
+            <a href="/login">Войдите</a>, чтобы оставлять ответы.
+        </div>
     {% endif %}
+
+    <script>
+        function quotePost(author, text) {
+            const textarea = document.getElementById('reply-textarea');
+            if (textarea) {
+                textarea.value += `> ${author}: ${text}\n\n`;
+                textarea.focus();
+                textarea.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    </script>
 
 </body>
 </html>
